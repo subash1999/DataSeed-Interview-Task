@@ -29,7 +29,7 @@ const SidebarData = [
 function DashboardNavbar() {
   const [sidebar, setSidebar] = useState(false);
 
-  const showSidebar = () => setSidebar(true);
+  const toggleSidebar = () => setSidebar(!sidebar);
   const closeSidebar = () => setSidebar(false);
 
   let user = useSelector(selectCurrentUser);
@@ -48,7 +48,7 @@ function DashboardNavbar() {
           <Navbar.Brand data-testid="show-sidebar-btn"
             href="#"
             className="justify-content-center"
-            onClick={showSidebar}
+            onClick={toggleSidebar}
           >
             <span to="#" className="sidebar-menu-bars">
               <FaIcons.FaBars />

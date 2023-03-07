@@ -43,6 +43,7 @@ class Source(BaseModel):
 
     name = models.CharField(max_length=500, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False, related_name="sources")
+    description = models.CharField(max_length=255, blank=True, null=True)
     log_format = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -73,38 +74,11 @@ class Severity(BaseModel):
 
     level = models.IntegerField(blank=False, null=False, unique=True)
     name = models.TextField(blank=False, null=False, unique=True)
-    source = models.ForeignKey(
-        Source, on_delete=models.CASCADE, blank=False, null=False, related_name="severities"
-    )
     is_default = models.BooleanField(blank=False, null=False, default=False)
 
     def __str__(self) -> str:
         return self.level + ": " + self.name
 
-
-class Correlation(BaseModel):
-    """A Django model representing a correlation in a project,
-        which inherits from the BaseModel.
-
-    Attributes:
-        correlation_id (TextField): A text field representing the correlation ID. 
-            It is a required field.
-        description (TextField): A text field representing a description of the correlation. 
-            It is an optional field.
-        source (ForeignKey): A foreign key to the Source model. 
-            It represents the source that the correlation is associated with.
-
-    Methods:
-        __str__(self) -> str: Returns a string representation of the correlation instance, 
-            which includes the correlation ID.
-    """
-
-    correlation_id = models.TextField(blank=False, null=False)
-    description = models.TextField(blank=True, null=True)
-    source = models.ForeignKey(Source, on_delete=models.CASCADE, blank=False, null=False, related_name="correlations")
-
-    def __str__(self) -> str:
-        return str(self.correlation_id)
 
 
 class Log(BaseModel):
@@ -124,11 +98,12 @@ class Log(BaseModel):
 
     timestamp = models.DateTimeField(blank=False, null=False)
     message = models.TextField(blank=True, null=False)
-    correlation = models.ForeignKey(
-        Correlation, on_delete=models.CASCADE, null=True, blank=True, related_name="logs"
-    )
+    correlation = models.TextField(blank=True, null=True)
     severity = models.ForeignKey(
         Severity, on_delete=models.CASCADE, null=False, blank=False, related_name="logs"
+    )
+    source = models.ForeignKey(
+        Source, on_delete=models.CASCADE, blank=False, null=False, related_name="logs"
     )
 
     def __str__(self) -> str:

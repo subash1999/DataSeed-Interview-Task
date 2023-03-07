@@ -1,124 +1,222 @@
-import React, { useState, useEffect } from 'react';
-import BootstrapTable from 'react-bootstrap-table-next';
-import paginationFactory from 'react-bootstrap-table2-paginator';
-import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
-import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+import { faEdit, faSearch, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  InputAdornment,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TextField,
+} from "@mui/material";
+import React, { useState } from "react";
+import { Button, ButtonGroup } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import {
+  getSourceUpdateStatus,
+  markAsUpdated,
+} from "../redux/slices/sourceSlice";
+import {
+  useDeleteSourceMutation,
+  useGetAllSourcesQuery,
+} from "../services/sourceService";
+import ConfirmModal from "./ConfirmModal";
+import { useDispatch } from "react-redux";
+import { deleteSource } from "../redux/slices/sourceSlice";
+import NotificationManager from "react-notifications/lib/NotificationManager";
+import EditSourceModalForm from "./EditSourceModalForm";
 
-function SourceTable() {
-  const [tableData, setTableData] = useState([]);
-  const [pagination, setPagination] = useState({
-    sizePerPage: 10,
-    page: 1,
-    totalSize: 0,
-  });
-  const [filter, setFilter] = useState('');
+const columns = [
+  { isIndex: true, id: "sn", label: "SN", minWidth: 50 },
+  { isIndex: false, id: "name", label: "Name", minWidth: 100 },
+  { isIndex: false, id: "description", label: "Description", minWidth: 150 },
+  { isIndex: false, id: "logs_count", label: "Logs Count", minWidth: 100 },
+];
 
-  const fetchData = async (page, sizePerPage, searchText) => {
-    const url = `https://your-server.com/api/data?page=${page}&sizePerPage=${sizePerPage}&searchText=${searchText}`;
-    const response = await axios.get(url);
-    const { data, totalSize } = response.data;
-    setTableData(data);
-    setPagination({ ...pagination, totalSize });
+const SourceTable = () => {
+  const sourceUpdateStatus = useSelector(getSourceUpdateStatus);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [sourceToEdit, setSourceToEdit] = useState({});
+
+  const handleCloseEditModal = () => setShowEditModal(false);
+  const handleShowEditModal = () => setShowEditModal(true);
+
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
+  };
+  function getQueryFilter() {
+    return {
+      page_size: pageSize,
+      page: page + 1,
+      search: searchTerm,
+      sourceUpdateStatus: sourceUpdateStatus,
+    };
+  }
+
+  const handlePageSizeChange = (event) => {
+    setPageSize(+event.target.value);
+    setPage(0);
   };
 
-  const handlePageChange = (page, sizePerPage) => {
-    fetchData(page, sizePerPage, filter);
-    setPagination({ ...pagination, page, sizePerPage });
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setPage(0);
   };
 
-  const handleSearch = (event) => {
-    const searchText = event.target.value;
-    fetchData(1, pagination.sizePerPage, searchText);
-    setFilter(searchText);
+  const { data, isError, isLoading } = useGetAllSourcesQuery(getQueryFilter());
+
+  const [deleteSourceMutation, { isDeleting }] = useDeleteSourceMutation();
+  const dispatch = useDispatch();
+  const deleteSourceConfirm = async (source) => {
+    try {
+      const response = await deleteSourceMutation(source.id).unwrap();
+      NotificationManager.warning(
+        `Deleted`,
+        `Source '${source["name"]}' deleted successfully.`,
+        4000
+      );
+      //   dispatch(deleteSource(source.id));
+      dispatch(markAsUpdated());
+    } catch (err) {
+      debugger;
+
+      dispatch(markAsUpdated());
+      let msg = "";
+      if (!err?.status) {
+        // isLoading: true until timeout occurs
+        msg = "No Server Response";
+      } else if (err.status === 400) {
+        msg = err.data.error;
+      } else if (err.status === 401) {
+        msg = err.data.error;
+      } else if (err.status === 404) {
+        msg = err?.data?.detail ? err?.data?.detail : "URL not found";
+      } else {
+        msg = "Failed";
+      }
+      NotificationManager.error(
+        `Error deleting source '${source["name"]}'`,
+        `${msg}`,
+        4000
+      );
+    }
   };
 
-  const columns = [
-    {
-      dataField: 'id',
-      text: 'ID',
-    },
-    {
-      dataField: 'name',
-      text: 'Name',
-      filter: textFilter(),
-    },
-    {
-      dataField: 'age',
-      text: 'Age',
-    },
-    {
-      dataField: 'email',
-      text: 'Email',
-      filter: textFilter(),
-    },
-  ];
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-  useEffect(() => {
-    fetchData(pagination.page, pagination.sizePerPage, filter);
-  }, []);
+  if (isError) {
+    return <div>Error loading data</div>;
+  }
+
+  const rows = data.results;
 
   return (
     <>
-      <input
-        type="text"
-        value={filter}
-        onChange={handleSearch}
-        placeholder="Search"
-      />
-      <BootstrapTable
-        remote={{ pagination: true, filter: true }}
-        keyField="id"
-        data={tableData}
-        columns={columns}
-        pagination={paginationFactory(pagination)}
-        filter={filterFactory()}
-        onTableChange={handlePageChange}
-        noDataIndication={() => 'No data available'}
-      />
+      <div>
+        <TextField
+          label="Search"
+          variant="outlined"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <FontAwesomeIcon icon={faSearch} />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TableContainer>
+          <Table stickyHeader aria-label="sticky table">
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    align={column.align}
+                    style={{ minWidth: column.minWidth }}
+                  >
+                    {column.label}
+                  </TableCell>
+                ))}
+                <TableCell key="actionColumn" style={{ minWidth: "100px" }}>
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows &&
+                rows.map((row, index) => {
+                  return (
+                    <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                      {columns.map((column) => {
+                        const value = row[column.id];
+                        return (
+                          <TableCell key={column.id} align={column.align}>
+                            {column.isIndex ? index + 1 : value}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell key="actionColumn_rowid">
+                        <ButtonGroup>
+                          <Button
+                            variant="info"
+                            onClick={() => {
+                              setSourceToEdit(row);
+                              handleShowEditModal();
+                            }}
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </Button>{" "}
+                          <ConfirmModal
+                            onConfirm={() => {
+                              deleteSourceConfirm(row);
+                            }}
+                            body={
+                              "Are you sure you want to delete source '" +
+                              row["name"] +
+                              "'? All the realted logs will also be deleted."
+                            }
+                            confirmText="Confirm Delete"
+                            title="Deleting Source"
+                            confirmBSVarient="danger"
+                          >
+                            <Button variant="danger">
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </ConfirmModal>
+                        </ButtonGroup>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={data.count}
+          rowsPerPage={pageSize}
+          page={page}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handlePageSizeChange}
+        />
+      </div>
+      <EditSourceModalForm
+        show={showEditModal}
+        onHide={handleCloseEditModal}
+        source={sourceToEdit}
+      ></EditSourceModalForm>
     </>
   );
-}
+};
 
 export default SourceTable;
-
-
-
-// // django code below
-// from django.core.paginator import Paginator
-// from django.db.models import Q
-// from django.http import JsonResponse
-// from django.views.decorators.csrf import csrf_exempt
-// from myapp.models import MyModel
-
-// @csrf_exempt
-// def get_data(request):
-//     # Get query parameters
-//     page = request.GET.get('page', 1)
-//     size = request.GET.get('sizePerPage', 10)
-//     search_text = request.GET.get('searchText', '')
-
-//     # Build search query
-//     search_query = Q(name__icontains=search_text) | Q(email__icontains=search_text)
-
-//     # Get data and apply search filter
-//     data = MyModel.objects.filter(search_query)
-
-//     # Paginate data
-//     paginator = Paginator(data, size)
-//     page_data = paginator.get_page(page)
-
-//     # Format data for response
-//     formatted_data = [{
-//         'id': item.id,
-//         'name': item.name,
-//         'age': item.age,
-//         'email': item.email
-//     } for item in page_data]
-
-//     # Return response
-//     return JsonResponse({
-//         'data': formatted_data,
-//         'totalSize': data.count(),
-//     })

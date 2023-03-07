@@ -4,9 +4,9 @@ export const api = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAllSources: builder.query({
       query: (filter) => ({
-        url: "logs/source",
+        url: "logs/source/",
         method: "GET",
-        body: { ...filter },
+        params: { ...filter },
       }),
     }),
     createSource: builder.mutation({
@@ -23,10 +23,10 @@ export const api = apiSlice.injectEndpoints({
       }),
     }),
     updateSource: builder.mutation({
-      query: (id, payload) => ({
-        url: "logs/source/" + String(id) + "/",
-        method: "PUT",
-        body: { ...payload },
+      query: (payload) => ({
+        url: "logs/source/" + String(payload.id) + "/",
+        method: "PATCH",
+        body: { name: payload.name, description: payload.description, user:payload.user },
       }),
     }),
     deleteSource: builder.mutation({

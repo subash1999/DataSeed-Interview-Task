@@ -60,6 +60,7 @@ const LoginPage = () => {
       // get return url from location state or default to home page
       const { from } = location.state || { from: { pathname: "/" } };
       navigate(from);
+
     } catch (err) {
       console.log(err);
       if (!err?.status) {

@@ -1,24 +1,28 @@
 import { Formik } from "formik";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Button, Container, Form, Alert, Modal } from "react-bootstrap";
 import { NotificationManager } from "react-notifications";
 import * as Yup from "yup";
 import { useCreateSourceMutation } from "../services/sourceService";
 import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from "../redux/slices/authSlice";
-import { createSource } from "../redux/slices/sourceSlice";
+import { createSource, markAsUpdated } from "../redux/slices/sourceSlice";
 
 const sourceSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, "Too Short! Minimun legth is 2 characters long")
     .max(50, "Too Long! Maximum legth is 50 characters long")
     .required("Source name is required"),
+  description: Yup.string()
+    .min(2, "Too Short! Minimun legth is 2 characters long")
+    .max(255, "Too Long! Maximum legth is 50 characters long"),
 });
 const initialFormValues = {
   name: "",
+  description: ""
 };
 
-const LogSourceForm = (props) => {
+const AddLogSourceModalForm = (props) => {
   const [createSourceMutation, { isLoading }] = useCreateSourceMutation();
 
   let user = useSelector(selectCurrentUser);
@@ -36,9 +40,11 @@ const LogSourceForm = (props) => {
       const source = await createSourceMutation({
         name: values.name,
         user: user["id"],
+        description: values.description,
       }).unwrap();
 
       dispatch(createSource({ ...source }));
+      dispatch(markAsUpdated());
       setErrMsg();
       closeButtonClickHandler();
       NotificationManager.success(
@@ -50,7 +56,7 @@ const LogSourceForm = (props) => {
       console.log(err);
       if (!err?.status) {
         // isLoading: true until timeout occurs
-        setErrMsg({"error":"No Server Response"});
+        setErrMsg({ error: "No Server Response" });
       } else if (err.status === 400 || err.status === 401) {
         setErrMsg(err.data);
       } else if (err.status === 404) {
@@ -114,6 +120,7 @@ const LogSourceForm = (props) => {
                   <Form.Control
                     type="text"
                     name="name"
+                    data-testid="name"
                     placeholder="Source name"
                     value={values.name}
                     onChange={handleChange}
@@ -121,8 +128,33 @@ const LogSourceForm = (props) => {
                     isInvalid={!!errors.name}
                     aria-describedby="name-message"
                   />
-                  <Form.Control.Feedback id="name-message" type="invalid">
-                    {errors.name}
+                  <Form.Control.Feedback
+                    id="description-message"
+                    type="invalid"
+                  >
+                    {errors.description}
+                  </Form.Control.Feedback>
+                </Form.Group>
+                {/* source description */}
+                <Form.Group controlId="description">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    type="text"
+                    name="description"
+                    data-testid="description"
+                    placeholder="Source description"
+                    value={values.description}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    isInvalid={!!errors.description}
+                    aria-describedby="description-message"
+                  />
+                  <Form.Control.Feedback
+                    id="description-message"
+                    type="invalid"
+                  >
+                    {errors.description}
                   </Form.Control.Feedback>
                 </Form.Group>
                 <br />
@@ -155,4 +187,4 @@ const LogSourceForm = (props) => {
   );
 };
 
-export default LogSourceForm;
+export default AddLogSourceModalForm;

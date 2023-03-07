@@ -2,11 +2,12 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
-from .views import TokenObtainPairView, TokenRefreshView
-from django.utils.translation import gettext as _
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from .views import TokenObtainPairView, TokenRefreshView
 
 
 class AuthTestCase(APITestCase):

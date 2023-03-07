@@ -17,7 +17,6 @@ const baseQuery = fetchBaseQuery({
 // this is the base query that every other api should use. This refreshes the JWT token automatically
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
-  console.log(result);
   if (result?.error?.status === 401) {
     // send refresh token to get new access token
     const refreshResult = await baseQuery(

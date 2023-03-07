@@ -8,7 +8,7 @@ import { testRender as render, history, fakeLoginAPIResponse } from "../utils/te
 jest.mock("axios");
 
 describe("LoginPage", () => {
-  it("should render the username and password labels", () => {
+  it("should render the username and password input", () => {
     render(<LoginPage />);
 
     const usernameLabel = screen.getByLabelText("Username");

@@ -76,10 +76,11 @@
   background-color: var(--primary);
   width: 250px;
   height: 100vh;
+  z-index: 99999;
   display: flex;
   justify-content: center;
   position: fixed;
-  top: 0;
+  /* top: 0; */
   left: -100%;
   transition: 850ms;
 }

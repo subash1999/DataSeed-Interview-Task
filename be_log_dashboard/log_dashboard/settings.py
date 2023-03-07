@@ -235,7 +235,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "logs": {
+        "app": {
             # all_timed_rotating and error_timed_rotating is for the pord logging handlers
             # consolse and the debub_file are the dev logging handlers
             "handlers": [

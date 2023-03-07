@@ -5,8 +5,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework import status
 from django.utils.translation import gettext as _
+import logging
 
-
+logger = logging.getLogger('app')
 class TokenObtainPairView(APIView):
     # This view allows unauthenticated requests
     permission_classes = [permissions.AllowAny]
@@ -25,21 +26,25 @@ class TokenObtainPairView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
         if username is None and password is None:
-            return Response(
+            logger.info("Username and password are required")
+            return Response(                
                 {"error": _("Username and password are required")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if username is None:
+            logger.info("Username is required")
             return Response(
                 {"error": _("Username is required")}, status=status.HTTP_400_BAD_REQUEST
             )
         if password is None:
+            logger.info("Password is required")
             return Response(
                 {"error": _("Password is required")}, status=status.HTTP_400_BAD_REQUEST
             )
         user = authenticate(username=username, password=password)
         if user:
             refresh = RefreshToken.for_user(user)
+            logger.info("Token generated successfully")
             return Response(
                 {
                     "user": {
@@ -54,6 +59,7 @@ class TokenObtainPairView(APIView):
                 status=status.HTTP_200_OK,
             )
         else:
+            logger.info("Invalid auth Credentials")
             return Response(
                 data={"error": _("Invalid credentials")},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -76,12 +82,14 @@ class TokenRefreshView(APIView):
         """
         refresh = request.data.get("refresh")
         if refresh is None:
+            logger.info("Invalid refresh token")
             return Response(
                 {"error": _("Invalid refresh token")},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
         token = RefreshToken(refresh)
+        logger.info("Token Refreshed")
         return Response(
             {
                 "access": str(token.access_token),

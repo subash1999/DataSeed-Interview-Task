@@ -11,7 +11,8 @@ import {
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import LogSourceModalForm from "../components/LogSourceModalForm";
+import AddSourceModalForm from "../components/AddSourceModalForm";
+import SourceTable from "../components/SourceTable";
 
 const LogSourcePage = () => {
   useEffect(() => {
@@ -30,8 +31,9 @@ const LogSourcePage = () => {
           Add Source
         </Button>
       </Container>
+      <SourceTable />
 
-      <LogSourceModalForm show={showModal} onHide={handleCloseModal} />
+      <AddSourceModalForm show={showModal} onHide={handleCloseModal} />
     </>
   );
 };

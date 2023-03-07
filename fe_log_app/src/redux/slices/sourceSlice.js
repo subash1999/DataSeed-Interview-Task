@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const getInitialState = () => {
   let state = {
     sources: [],
+    isUpdated: 1,
   };
   return state;
 };
@@ -14,6 +15,9 @@ const authSlice = createSlice({
     setSourceList: (state, action) => {
       const { sources } = action.payload;
       state.sources = sources;
+    },
+    markAsUpdated: (state) => {
+      state.isUpdated = state.isUpdated+1;
     },
     createSource: (state, action) => {
         const { source } = action.payload;
@@ -31,9 +35,10 @@ const authSlice = createSlice({
   },
 });
 
-export const { setSourceList, createSource, updateSource, deleteSource} = authSlice.actions;
+export const { setSourceList, markAsUpdated, createSource, updateSource, deleteSource} = authSlice.actions;
 
 export default authSlice.reducer;
 
-export const getSourceList = (state) => state.auth.sources;
-export const getSingleSource = (state,id) => state.sources.filter((source) => source.id === id);
+export const getSourceList = (state) => state.source.sources;
+export const getSingleSource = (state,id) => state.source.sources.filter((source) => source.id === id);
+export const getSourceUpdateStatus = (state) => state.source.isUpdated;
