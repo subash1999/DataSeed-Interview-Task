@@ -1,0 +1,10 @@
+env/
+.vscode/
+fe_log_app/node_modules/
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__
+db.sqlite3
+media
