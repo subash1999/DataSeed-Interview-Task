@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Log Dashboard React Django Full Stack Application
 
 This project has the JWT authentication, redux state management, form validation, front-end and back-end unit test and CRUD opertaions for log source.
 Note: This app is using sqlite for convinience but we can easily migrate to any realtional database as django model makes it easier for us
